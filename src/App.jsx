@@ -26,11 +26,11 @@ function App() {
         />
         <Route
           path="/properties/:id"
-          element={<ProtectedRoute element={ListingDetails} />}
+          element={<ListingDetails />}
         />
         <Route
           path="/properties/category/:category"
-          element={<ProtectedRoute element={Category} />}
+          element={<Category/>}
         />
         <Route path="/properties/search/:search" element={<Search />} />
         <Route
