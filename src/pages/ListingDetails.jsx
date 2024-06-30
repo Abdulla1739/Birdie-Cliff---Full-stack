@@ -39,7 +39,7 @@ const ListingDetails = () => {
   useEffect(() => {
     getListingByID();
   }, [id]);
-  
+
   const handleSelect = (ranges) => {
     setDateRange([ranges.selection]);
   };
@@ -61,7 +61,7 @@ const ListingDetails = () => {
         endDate: dateRange[0].endDate.toDateString(),
         totalPrice: listing.price * dayCount,
       }
-      console.log(bookingForm);
+      // console.log(bookingForm);
       const reqBody = JSON.stringify(bookingForm)
       const result = await bookingTripListAPI(reqBody)
       if (result.status =200) {

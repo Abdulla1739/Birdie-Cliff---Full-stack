@@ -26,7 +26,7 @@ const Listing = () => {
       console.log("Fetch Listings Failed", error.message);
     }
   };
-  console.log(listing);
+  // console.log(listing);
 
   useEffect(() => {
     handleListingAPI();

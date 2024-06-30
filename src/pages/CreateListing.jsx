@@ -58,7 +58,7 @@ const CreateListing = () => {
 
   //for storing photos
   const [photos, setPhotos] = useState([]);
-  console.log(photos);
+  // console.log(photos);
 
   // for storing form description in the bottom
   const [formDescription, setFormDescription] = useState({
@@ -130,7 +130,7 @@ const CreateListing = () => {
       photos.forEach((photo) => {
         listingForm.append("listingPhotos", photo);
       });
-      console.log(listingForm);
+      // console.log(listingForm);
       const response = await addListingAPI(listingForm, reqHeader);
       if (response.status === 200) {
         navigate("/");
