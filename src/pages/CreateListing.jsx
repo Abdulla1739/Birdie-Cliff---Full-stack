@@ -1,41 +1,164 @@
-import React from "react";
+import React, { useState } from "react";
 import "./CreateListing.css";
 import Navbar from "../components/Navbar";
-import { categories,types, facilities } from "../data";
+import { categories, types, facilities } from "../data";
 import { AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
-import { styled, } from 'styled-components';
-import {DragDropContext, Draggable, Droppable} from 'react-beautiful-dnd'
+import { styled } from "styled-components";
+import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import { IoIosImages } from "react-icons/io";
+import { BiTrash } from "react-icons/bi";
+import { useSelector } from "react-redux";
+import { addListingAPI } from "../service/AllAPI";
+import { useNavigate } from "react-router-dom";
+import Footer from "../components/Footer";
 
+//styling for remove icons
 const StyledRemoveCircleOutline = styled(RemoveCircleOutline)`
   font-size: 25px;
   cursor: pointer;
   &:hover {
-    color: #F8395A;
+    color: #f8395a;
   }
 `;
+
+//styling for add icons
 const StyledAddCircleOutline = styled(AddCircleOutline)`
   font-size: 25px;
   cursor: pointer;
   &:hover {
-    color: #F8395A;
+    color: #f8395a;
   }
 `;
 
 const CreateListing = () => {
-    
+  const navigate = useNavigate();
+  //for taking user from store
+  const creatorId = useSelector((state) => state.user._id);
+  //for selection of categories type and amendities
+  const [category, setCategory] = useState("");
+  const [type, setType] = useState("");
+  const [amenities, setAmenities] = useState([]);
+  console.log("userid received from redux", creatorId);
+
+  //for storing the address and location from input
+  const [formLocation, setFormLocation] = useState({
+    streetAddress: "",
+    aptSuite: "",
+    city: "",
+    province: "",
+    country: "",
+  });
+  // console.log(formLocation);
+
+  //for setting the count of guest, bedroom, beds, bathrooms
+  const [guestCount, setGuestCount] = useState(1);
+  const [bedroomCount, setBedroomCount] = useState(1);
+  const [bedsCount, setBedsCount] = useState(1);
+  const [bathroomCount, setBathroomCount] = useState(1);
+
+  //for storing photos
+  const [photos, setPhotos] = useState([]);
+  console.log(photos);
+
+  // for storing form description in the bottom
+  const [formDescription, setFormDescription] = useState({
+    title: "",
+    description: "",
+    highlight: "",
+    highlightDesc: "",
+    price: 0,
+  });
+
+  // console.log(formDescription);
+
+  //for amenities section funtion
+  const handleSelectAmenities = (facility) => {
+    if (amenities.includes(facility)) {
+      setAmenities((prevAmenities) =>
+        prevAmenities.filter((option) => option !== facility)
+      );
+    } else {
+      setAmenities((prev) => [...prev, facility]);
+    }
+  };
+
+  //functions for uplading images like drag, uploadand remove
+  const handleUploadPhotos = (e) => {
+    const newPhotos = e.target.files;
+    setPhotos((prevPhotos) => [...prevPhotos, ...newPhotos]);
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    const items = Array.from(photos);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setPhotos(items);
+  };
+
+  const handleRemovePhoto = (indexToRemove) => {
+    setPhotos((prevPhotos) =>
+      prevPhotos.filter((_, index) => index !== indexToRemove)
+    );
+  };
+  //for posting the details to DB
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const reqHeader = {
+        "Content-Type": "multipart/form-data",
+      };
+      const listingForm = new FormData();
+      listingForm.append("creator", creatorId);
+      listingForm.append("category", category);
+      listingForm.append("type", type);
+      listingForm.append("streetAddress", formLocation.streetAddress);
+      listingForm.append("aptSuite", formLocation.aptSuite);
+      listingForm.append("city", formLocation.city);
+      listingForm.append("province", formLocation.province);
+      listingForm.append("country", formLocation.country);
+      listingForm.append("guestCount", guestCount);
+      listingForm.append("bedroomCount", bedroomCount);
+      listingForm.append("bedsCount", bedsCount); 
+      listingForm.append("bathroomCount", bathroomCount);
+      listingForm.append("amenities", amenities);
+      listingForm.append("title", formDescription.title);
+      listingForm.append("description", formDescription.description);
+      listingForm.append("highlight", formDescription.highlight);
+      listingForm.append("highlightDesc", formDescription.highlightDesc);
+      listingForm.append("price", formDescription.price);
+      photos.forEach((photo) => {
+        listingForm.append("listingPhotos", photo);
+      });
+      console.log(listingForm);
+      const response = await addListingAPI(listingForm, reqHeader);
+      if (response.status === 200) {
+        navigate("/");
+      }
+    } catch (err) {
+      res.status(401).json(err);
+    }
+  };
+
   return (
     <>
       <Navbar />
       <div className="create-listing">
         <h1>Publish your Place</h1>
-        <form>
+        <form onSubmit={handleSubmit}>
           <div className="create-listing_step1">
             <h2>Step 1: Tell us about your place</h2>
             <hr />
             <h3>Which of these categories best describe your place?</h3>
             <div className="category-list">
               {categories?.map((item, index) => (
-                <div className="category" key={index}>
+                <div
+                  className={`category ${
+                    category === item.label ? "selected" : ""
+                  }`}
+                  key={index}
+                  onClick={() => setCategory(item.label)}
+                >
                   <div className="category_icon">{item.icon}</div>
                   <p>{item.label}</p>
                 </div>
@@ -43,79 +166,170 @@ const CreateListing = () => {
             </div>
             <h3>What type of place will guests have?</h3>
             <div className="type-list">
-                {types?.map((item,index)=>(
-                    <div className="type" key={index}>
-                        <div className="type_text">
-                            <h4>{item?.name}</h4>
-                            <p>{item?.description}</p>
-                        </div>
-                        <div className="type_icon">
-                            {item.icon}
-                        </div>
-                    </div>
-                ))}
+              {types?.map((item, index) => (
+                <div
+                  className={`type ${type === item.name ? "selected" : ""}`}
+                  key={index}
+                  onClick={() => setType(item.name)}
+                >
+                  <div className="type_text">
+                    <h4>{item?.name}</h4>
+                    <p>{item?.description}</p>
+                  </div>
+                  <div className="type_icon">{item.icon}</div>
+                </div>
+              ))}
             </div>
             <h3>Where's your place located?</h3>
             <div className="full">
-                <div className="location">
-                    <p>Street Address</p>
-                    <input type="text" placeholder="Street Address" name="streetAddress" required/>
-                </div>
+              <div className="location">
+                <p>Street Address</p>
+                <input
+                  type="text"
+                  placeholder="Street Address"
+                  name="streetAddress"
+                  value={formLocation.streetAddress}
+                  onChange={(e) =>
+                    setFormLocation({
+                      ...formLocation,
+                      streetAddress: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
             </div>
-            <div  className="half">
-                <div className="location">
-                    <p>Appartment, Suite etc. (if applicable)</p>
-                    <input type="text" placeholder="apt, Suite etc. (if applicable)" name="aptSuite" required/>
-                </div>
-                <div className="location">
-                    <p>City</p>
-                    <input type="text" placeholder="City" name="city" required/>
-                </div>
+            <div className="half">
+              <div className="location">
+                <p>Appartment, Suite etc. (if applicable)</p>
+                <input
+                  type="text"
+                  placeholder="apt, Suite etc. (if applicable)"
+                  name="aptSuite"
+                  value={formLocation.aptSuite}
+                  onChange={(e) =>
+                    setFormLocation({
+                      ...formLocation,
+                      aptSuite: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div className="location">
+                <p>City</p>
+                <input
+                  type="text"
+                  placeholder="City"
+                  name="city"
+                  value={formLocation.city}
+                  onChange={(e) =>
+                    setFormLocation({ ...formLocation, city: e.target.value })
+                  }
+                  required
+                />
+              </div>
             </div>
-            <div  className="half">
-                <div className="location">
-                    <p>Province</p>
-                    <input type="text" placeholder="Province" name="province" required/>
-                </div>
-                <div className="location">
-                    <p>Country</p>
-                    <input type="text" placeholder="Country" name="country" required/>
-                </div>
+            <div className="half">
+              <div className="location">
+                <p>Province</p>
+                <input
+                  type="text"
+                  placeholder="Province"
+                  name="province"
+                  value={formLocation.province}
+                  onChange={(e) =>
+                    setFormLocation({
+                      ...formLocation,
+                      province: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div className="location">
+                <p>Country</p>
+                <input
+                  type="text"
+                  placeholder="Country"
+                  value={formLocation.country}
+                  onChange={(e) =>
+                    setFormLocation({
+                      ...formLocation,
+                      country: e.target.value,
+                    })
+                  }
+                  name="country"
+                  required
+                />
+              </div>
             </div>
             <h3>Share some basics about your place</h3>
             <div className="basics">
-                <div className="basic">
-                    <p>Guests</p>
-                    <div className="basic_count">
-                    <StyledRemoveCircleOutline />
-                    <p>1</p>
-                    <StyledAddCircleOutline/>
-                    </div>
+              <div className="basic">
+                <p>Guests</p>
+                <div className="basic_count">
+                  <StyledRemoveCircleOutline
+                    onClick={() => {
+                      guestCount > 1 && setGuestCount(guestCount - 1);
+                    }}
+                  />
+                  <p>{guestCount}</p>
+                  <StyledAddCircleOutline
+                    onClick={() => {
+                      setGuestCount(guestCount + 1);
+                    }}
+                  />
                 </div>
-                <div className="basic">
-                    <p>Bedrooms</p>
-                    <div className="basic_count">
-                    <StyledRemoveCircleOutline />
-                    <p>1</p>
-                    <StyledAddCircleOutline/>
-                    </div>
+              </div>
+              <div className="basic">
+                <p>Bedrooms</p>
+                <div className="basic_count">
+                  <StyledRemoveCircleOutline
+                    onClick={() => {
+                      bedroomCount > 1 && setBedroomCount(bedroomCount - 1);
+                    }}
+                  />
+                  <p>{bedroomCount}</p>
+                  <StyledAddCircleOutline
+                    onClick={() => {
+                      setBedroomCount(bedroomCount + 1);
+                    }}
+                  />
                 </div>
-                <div className="basic">
-                    <p>Beds</p>
-                    <div className="basic_count">
-                    <StyledRemoveCircleOutline />
-                    <p>1</p>
-                    <StyledAddCircleOutline/>
-                    </div>
+              </div>
+              <div className="basic">
+                <p>Beds</p>
+                <div className="basic_count">
+                  <StyledRemoveCircleOutline
+                    onClick={() => {
+                      bedsCount > 1 && setBedsCount(bedsCount - 1);
+                    }}
+                  />
+                  <p>{bedsCount}</p>
+                  <StyledAddCircleOutline
+                    onClick={() => {
+                      setBedsCount(bedsCount + 1);
+                    }}
+                  />
                 </div>
-                <div className="basic">
-                    <p>Bathrooms</p>
-                    <div className="basic_count">
-                    <StyledRemoveCircleOutline />
-                    <p>1</p>
-                    <StyledAddCircleOutline/>
-                    </div>
+              </div>
+              <div className="basic">
+                <p>Bathrooms</p>
+                <div className="basic_count">
+                  <StyledRemoveCircleOutline
+                    onClick={() => {
+                      bathroomCount > 1 && setBathroomCount(bathroomCount - 1);
+                    }}
+                  />
+                  <p>{bathroomCount}</p>
+                  <StyledAddCircleOutline
+                    onClick={() => {
+                      setBathroomCount(bathroomCount + 1);
+                    }}
+                  />
                 </div>
+              </div>
             </div>
           </div>
           <div className="create-listing_step2">
@@ -123,23 +337,97 @@ const CreateListing = () => {
             <hr />
             <h3>Tell guests what your place has to offer</h3>
             <div className="amenities">
-                {facilities?.map((item,index)=>(
-                    <div className="facility" key={index}>
-                        <div className="facility_icon">{item.icon}</div>
-                        <p>{item.name}</p>
-                    </div>
-                ))}
+              {facilities?.map((item, index) => (
+                <div
+                  className={`facility ${
+                    amenities.includes(item.name) ? "selected" : ""
+                  }`}
+                  key={index}
+                  onClick={() => handleSelectAmenities(item.name)}
+                >
+                  <div className="facility_icon">{item.icon}</div>
+                  <p>{item.name}</p>
+                </div>
+              ))}
             </div>
             <h3>Add some photos of your place</h3>
-            <DragDropContext > 
-                {/* onDragEnd={} */}
-                <Droppable droppableId="photos" direction="horizontal">
-                    {(provided)=>(
-                        <div className="photos" {...provided.droppableProps} ref={provided.innerRef}>
-                            
-                        </div>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="photos" direction="horizontal">
+                {(provided) => (
+                  <div
+                    className="photos"
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                  >
+                    {photos.length < 1 && (
+                      <>
+                        <input
+                          id="image"
+                          type="file"
+                          style={{ display: "none" }}
+                          accept="image/*"
+                          onChange={handleUploadPhotos}
+                          multiple
+                        />
+                        <label htmlFor="image" className="alone">
+                          <div className="icon">
+                            <IoIosImages />
+                          </div>
+                          <p>Upload from your device</p>
+                        </label>
+                      </>
                     )}
-                </Droppable>
+
+                    {photos.length >= 1 && (
+                      <>
+                        {photos.map((photo, index) => {
+                          return (
+                            <Draggable
+                              key={index}
+                              draggableId={index.toString()}
+                              index={index}
+                            >
+                              {(provided) => (
+                                <div
+                                  className="photo"
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                >
+                                  <img
+                                    src={URL.createObjectURL(photo)}
+                                    alt="place"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemovePhoto(index)}
+                                  >
+                                    <BiTrash />
+                                  </button>
+                                </div>
+                              )}
+                            </Draggable>
+                          );
+                        })}
+                        <input
+                          id="image"
+                          type="file"
+                          style={{ display: "none" }}
+                          accept="image/*"
+                          onChange={handleUploadPhotos}
+                          multiple
+                        />
+                        <label htmlFor="image" className="together">
+                          <div className="icon">
+                            <IoIosImages />
+                          </div>
+                          <p>Upload from your device</p>
+                        </label>
+                      </>
+                    )}
+                  </div>
+                )}
+              </Droppable>
             </DragDropContext>
             <h3>What make your place attractive and exciting?</h3>
             <div className="description">
@@ -148,6 +436,13 @@ const CreateListing = () => {
                 type="text"
                 placeholder="Title"
                 name="title"
+                onChange={(e) =>
+                  setFormDescription({
+                    ...formDescription,
+                    title: e.target.value,
+                  })
+                }
+                value={formDescription.title}
                 required
               />
               <p>Description</p>
@@ -155,28 +450,56 @@ const CreateListing = () => {
                 type="text"
                 placeholder="Description"
                 name="description"
+                value={formDescription.description}
+                onChange={(e) =>
+                  setFormDescription({
+                    ...formDescription,
+                    description: e.target.value,
+                  })
+                }
                 required
               />
               <p>Highlight</p>
               <input
                 type="text"
                 placeholder="Highlight"
+                value={formDescription.highlight}
                 name="highlight"
+                onChange={(e) =>
+                  setFormDescription({
+                    ...formDescription,
+                    highlight: e.target.value,
+                  })
+                }
                 required
               />
               <p>Highlight details</p>
               <textarea
                 type="text"
                 placeholder="Highlight details"
+                value={formDescription.highlightDesc}
                 name="highlightDesc"
+                onChange={(e) =>
+                  setFormDescription({
+                    ...formDescription,
+                    highlightDesc: e.target.value,
+                  })
+                }
                 required
               />
               <p>Now, set your PRICE</p>
               <span>₹</span>
               <input
                 type="number"
-                placeholder="100"
+                placeholder="1000"
                 name="price"
+                onChange={(e) =>
+                  setFormDescription({
+                    ...formDescription,
+                    price: e.target.value,
+                  })
+                }
+                value={formDescription.value}
                 className="price"
                 required
               />
@@ -184,13 +507,11 @@ const CreateListing = () => {
           </div>
 
           <button className="submit_btn" type="submit">
-            CREATE YOUR LISTING
+            Create Your Listing
           </button>
-
-
-          
         </form>
       </div>
+      <Footer />
     </>
   );
 };

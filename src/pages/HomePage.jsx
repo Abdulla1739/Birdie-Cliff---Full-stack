@@ -1,19 +1,20 @@
-import React from 'react'
-import Navbar from '../components/Navbar'
-import Slide from '../components/Slide'
-import Categories from '../components/Categories'
-import Listing from '../components/Listing'
-
+import React from "react";
+import Navbar from "../components/Navbar";
+import Slide from "../components/Slide";
+import Categories from "../components/Categories";
+import Listing from "../components/Listing";
+import Footer from "../components/Footer";
 
 const HomePage = () => {
   return (
     <div>
-      <Navbar/>
-      <Slide/>
-      <Categories/>
-      <Listing/>
-      </div>
-  )
-}
+      <Navbar />
+      <Categories />
+      <Slide />
+      <Listing />
+      <Footer />
+    </div>
+  );
+};
 
-export default HomePage
+export default HomePage;

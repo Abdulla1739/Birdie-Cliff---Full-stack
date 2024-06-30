@@ -68,6 +68,7 @@
   cursor: pointer;
   color: white;
   font-size: 14px;
+  border: none;
 }
 
 .register_container form label img {
@@ -102,9 +103,9 @@
 }
 
 .register_container p a {
-    text-decoration: none;
-    color: wheat;
-    font-size: 17px;
-    font-weight: 600;
-    text-align: center;
+  text-decoration: none;
+  color: wheat;
+  font-size: 17px;
+  font-weight: 600;
+  text-align: center;
 }
